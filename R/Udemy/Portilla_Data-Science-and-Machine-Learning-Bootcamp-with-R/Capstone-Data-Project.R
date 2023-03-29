@@ -30,7 +30,7 @@ head(sal)
 combo <- batting %>%
   inner_join(sal, by = c("playerID", "yearID"))
 
-summary(merged)
+summary(combo)
 
 lost_players <- combo %>%
   filter(
@@ -44,4 +44,77 @@ combo_2001 <- combo %>%
     !playerID %in% c('giambja01', 'damonjo01', 'saenzol01'),
     yearID == 2001,
     salary < 15000000
+  ) %>%
+  select(
+    playerID, salary, AB, OBP
   )
+
+cross1 <- cross_join(combo_2001, combo_2001) %>%
+  filter(
+    playerID.x < playerID.y,
+    salary.x + salary.y < 15000000
+  )
+
+cross2 <- cross_join(cross1, combo_2001) %>%
+  rename(
+    playerID.z = playerID,
+    salary.z = salary,
+    AB.z = AB,
+    OBP.z = OBP
+  ) 
+
+filteredCross <- cross2 %>%
+  filter(
+    playerID.y < playerID.z
+  )
+
+filteredCross2 <- filteredCross %>%
+  filter(
+    salary.x + salary.y + salary.z < 15000000
+  )
+
+combAB <- sum(lost_players$AB)
+meanOBP <- mean(lost_players$OBP)
+rm(lost_players)
+rm(filteredCross)
+
+filteredCross3 <- filteredCross2 %>%
+  filter(
+    AB.x + AB.y + AB.z >= combAB
+  )
+rm(combAB)
+rm(filteredCross2)
+
+filteredCross4 <- filteredCross3 %>%
+  filter(
+    (OBP.x + OBP.y + OBP.z) / 3 >= meanOBP
+  )
+rm(meanOBP)
+rm(filteredCross3)
+
+filteredCross4 <- filteredCross4 %>%
+  mutate(
+    sumAB = AB.x + AB.y + AB.z,
+    meanOBP = (OBP.x + OBP.y + OBP.z) / 3,
+    sumSalary = salary.x + salary.y + salary.z
+  )
+
+head(filteredCross4 %>% arrange(desc(meanOBP)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
